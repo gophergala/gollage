@@ -1,3 +1,8 @@
 {{template "head"}}
 <h1>{{.Wall.Name}}</h1>
+<form action="/wall/{{.Wall.Name}}" method="post" enctype="multipart/form-data" class="form-horizontal image-form">
+  <label class="content-label col-sm-1" for="file">Filename</label>
+  <input type="file" name="file">
+  <input type="submit" name="submit" value="Submit">
+</form>
 {{template "tail"}}

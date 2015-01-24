@@ -1,6 +1,19 @@
 // Stole the majority of this from http://blog.golang.org/go-image-package
 package main
 
+// Process for adding an image to a wall:
+// 1. Image is uploaded to server
+// 2. Image is converted to PNG and normalized
+// 3. Image is uploaded to AWS...for some reason
+// 4. Image is added to Wall
+// 5. Wall regenerates main image, uploads to AWS
+
+// Process for zooming in:
+// 1. Get target zoom area
+// 2. Do some math or something
+// 3. Generate magical new image
+// 4. Something?
+
 import (
 	"errors"
 	"github.com/nfnt/resize"
@@ -8,13 +21,10 @@ import (
 	"image/png"
 	"io"
 	"math"
-
-	_ "code.google.com/p/vp8-go/webp"
-	_ "image/jpeg"
 )
 
 // convertToPNG converts from any recognized format to PNG.
-func convertToPNG(w io.Writer, r io.Reader) error {
+func ConvertToPNG(w io.Writer, r io.Reader) error {
 	img, _, err := image.Decode(r)
 	if err != nil {
 		return err
@@ -22,18 +32,15 @@ func convertToPNG(w io.Writer, r io.Reader) error {
 	return png.Encode(w, img)
 }
 
-func Resize(totalPix int, pic *image.Image) error {
-	bounds := (*pic).Bounds()
-	// Do actual image manipulations (with ImageMagick?)
+func Resize(totalPix int, pic image.Image) (image.Image, error) {
+	bounds := pic.Bounds()
 	if bounds.Dx() == 0 || bounds.Dy() == 0 {
-		return errors.New("One or more of your dimensions is zero")
+		return nil, errors.New("One or more of your dimensions is zero")
 	}
 	// Ratio
 	ratio := bounds.Dx() / bounds.Dy()
 	width := uint(math.Floor(math.Sqrt(float64(ratio * totalPix))))
-	newPic := resize.Resize(width, 0, *pic, resize.Lanczos3)
-	pic = &newPic
-	return nil
+	return resize.Resize(width, 0, pic, resize.Lanczos3), nil
 }
 
 // Stole this javascript from http://blog.vjeux.com/wp-content/uploads/2012/05/google-layout.html
@@ -53,16 +60,14 @@ func (w *Wall) GetHeight(images, width) {
 
 func (w *Wall) SetHeight(images, height) {
   w.Heights = append(w.Heights, height)
-  for (var i = 0; i < images.length; ++i) {
 		for i, image := range w.Images {
 			height += image.Pic.Bounds().Dx() / image.Pic.Bounds().Dy()
-		}
     $(images[i]).css({
       width: height * $(images[i]).data('width') / $(images[i]).data('height'),
       height: height
     });
     $(images[i]).attr('src', $(images[i]).attr('src').replace(/w[0-9]+-h[0-9]+/, 'w' + $(images[i]).width() + '-h' + $(images[i]).height()));
-  }
+	}
 }
 
 function resize(images, width) {

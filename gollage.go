@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-const ImageSize = 300
+const ImageSize = 90000
 
 var walls map[string]Wall = make(map[string]Wall)
 

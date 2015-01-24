@@ -24,10 +24,6 @@ type Image struct {
 }
 
 func (w *Wall) AddImage(pic image.Image) {
-
-	image := Image{pic, 0, 0}
-	w.Images = append(w.Images)
-
 }
 
 func newWallHandler(w http.ResponseWriter, r *http.Request) {
