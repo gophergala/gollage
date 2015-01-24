@@ -19,3 +19,8 @@ anything at all.
 
 Ideas are starting to flow, pages are starting to form, morale is at an
 all-time high. Bathroom break imminent, caffeine likely to blame.
+
+## Unholy things are happening
+
+You know it's bad when you've resorted to turing a Javascript algorithm into
+Go, gross. Also I have no idea what I'm doing, how do I image?
