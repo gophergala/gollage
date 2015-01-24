@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"math"
+	"net/http"
 )
 
 type Wall []Image
@@ -25,4 +26,8 @@ func (i *Image) Resize(totalPix int) error {
 	i.X = int(math.Floor(math.Sqrt(float64(ratio * totalPix))))
 	i.Y = int(math.Floor(math.Sqrt(float64(totalPix / ratio))))
 	return nil
+}
+
+func wallHandler(w http.ResponseWriter, r *http.Request) {
+
 }

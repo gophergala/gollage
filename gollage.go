@@ -9,13 +9,17 @@ import (
 
 const ImageSize = 300
 
+var Walls map[string]Wall
+
 func main() {
 	go h.run()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", serveHome)
 	r.HandleFunc("/ws", serveWs)
-	r.HandleFunc("/wall/{id}", uploadHandler)
+	// Create a new wall
+	r.HandleFunc("/wall", wallHandler).Methods("POST")
+	r.HandleFunc("/wall/{id}", uploadHandler).Methods("POST")
 
 	http.Handle("/", r)
 
