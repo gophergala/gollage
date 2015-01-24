@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gorilla/mux"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -9,7 +10,9 @@ import (
 
 const ImageSize = 300
 
-var Walls map[string]Wall
+var walls map[string]Wall = make(map[string]Wall)
+
+var templates = template.Must(template.ParseGlob("templates/*.html"))
 
 func main() {
 	go h.run()
@@ -17,9 +20,15 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", serveHome)
 	r.HandleFunc("/ws", serveWs)
+
+	// Brace yourself, some RESTful AF actions in here
+
 	// Create a new wall
-	r.HandleFunc("/wall", wallHandler).Methods("POST")
+	r.HandleFunc("/wall", newWallHandler).Methods("POST")
+	// Add an image to a wall
 	r.HandleFunc("/wall/{id}", uploadHandler).Methods("POST")
+	// Look at a wall
+	r.HandleFunc("/wall/{id}", wallHandler).Methods("GET")
 
 	http.Handle("/", r)
 
