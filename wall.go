@@ -33,21 +33,24 @@ func Resize(totalPix int, pic *image.Image) error {
 }
 
 func newWallHandler(w http.ResponseWriter, r *http.Request) {
-	status := 200
+	name := r.PostFormValue("name")
+	resp := JSONMessage{
+		200, // Start OK
+		"Wall created successfully",
+	}
 	// If it exists, they can't have it
 	if _, ok := walls["foo"]; ok {
-		// Wholly unacceptable
-		status = 406
+		// Sorry brah, this wall's taken
+		resp.Status = 406
+		resp.Message = "Someone already owns this wall"
+	} else {
+		err := NewWallBucket(name)
+		if err != nil {
+			resp.Status = 406
+			resp.Message = err.Error()
+		}
 	}
-	data := struct {
-		Status int
-	}{
-		status,
-	}
-	err := templates.ExecuteTemplate(w, "wall.html", data)
-	if err != nil {
-		fmt.Println("Error executing template:", err)
-	}
+	resp.WriteOut(w)
 }
 
 func wallHandler(w http.ResponseWriter, r *http.Request) {
