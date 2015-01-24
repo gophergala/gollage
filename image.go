@@ -35,3 +35,80 @@ func Resize(totalPix int, pic *image.Image) error {
 	pic = &newPic
 	return nil
 }
+
+// Stole this javascript from http://blog.vjeux.com/wp-content/uploads/2012/05/google-layout.html
+// Convert this shit to Go
+/*
+$(function () {
+
+
+func (w *Wall) GetHeight(images, width) {
+  width -= len(images) * 5;
+	height := 0;
+	for i, image := range w.Images {
+    height += image.Pic.Bounds().Dx() / image.Pic.Bounds().Dy()
+  }
+  return width / height;
+}
+
+func (w *Wall) SetHeight(images, height) {
+  w.Heights = append(w.Heights, height)
+  for (var i = 0; i < images.length; ++i) {
+		for i, image := range w.Images {
+			height += image.Pic.Bounds().Dx() / image.Pic.Bounds().Dy()
+		}
+    $(images[i]).css({
+      width: height * $(images[i]).data('width') / $(images[i]).data('height'),
+      height: height
+    });
+    $(images[i]).attr('src', $(images[i]).attr('src').replace(/w[0-9]+-h[0-9]+/, 'w' + $(images[i]).width() + '-h' + $(images[i]).height()));
+  }
+}
+
+function resize(images, width) {
+  setheight(images, getheight(images, width));
+}
+
+func (w *Wall) Run(maxHeight int) {
+	size := GridWidth - 50
+
+  n = 0;
+
+	queue = []Image
+	copy(queue, w.Images)
+	var slice []Image
+
+	OuterLoop:
+  for len(queue) > 0 {
+		for i := 1; i < len(queue) + 1; i++ {
+			slice := queue[0:i]
+			height := GetHeight(slice, size)
+      if height < maxHeight {
+        SetHeight(slice, height)
+        n++
+				queue = queue[:i]
+				continue OuterLoop
+      }
+    }
+    SetHeight(slice, Min(maxHeight, height))
+    n++
+    break
+  }
+  console.log(n);
+}
+
+func Min(inputs ...int) int {
+	smallest = inputs[0]
+	for _, val := range inputs {
+		if val < smallest {
+			smallest = val
+		}
+	}
+	return smallest
+}
+
+window.addEventListener('resize', function () { run(205); });
+$(function () { run(205); });
+
+});
+*/
