@@ -14,3 +14,8 @@ and not Go, got frustrated and passed out on couch.
 Ate lots of greasy breakfast foods, hangover successfully quelled. I think I've
 written code things, but I have no guarantee that anything does literally
 anything at all.
+
+## Day 7
+
+Ideas are starting to flow, pages are starting to form, morale is at an
+all-time high. Bathroom break imminent, caffeine likely to blame.
