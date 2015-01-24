@@ -8,3 +8,9 @@ bowls, and hope the Ballmer Peak does the rest.
 
 Totally missed the Ballmer Peak, was conviced code should have been in English
 and not Go, got frustrated and passed out on couch. 
+
+## Update
+
+Ate lots of greasy breakfast foods, hangover successfully quelled. I think I've
+written code things, but I have no guarantee that anything does literally
+anything at all.
