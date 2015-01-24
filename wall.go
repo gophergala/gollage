@@ -1,56 +1,44 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"github.com/nfnt/resize"
 	"image"
-	"math"
 	"net/http"
+	"strings"
 )
 
 type Wall struct {
 	Images []image.Image
 	Url    string
+	Name   string
 }
 
 func (w *Wall) AddImage(pic image.Image) {
 
 }
 
-func Resize(totalPix int, pic *image.Image) error {
-	bounds := (*pic).Bounds()
-	// Do actual image manipulations (with ImageMagick?)
-	if bounds.Dx() == 0 || bounds.Dy() == 0 {
-		return errors.New("One or more of your dimensions is zero")
-	}
-	// Ratio
-	ratio := bounds.Dx() / bounds.Dy()
-	width := uint(math.Floor(math.Sqrt(float64(ratio * totalPix))))
-	newPic := resize.Resize(width, 0, *pic, resize.Lanczos3)
-	pic = &newPic
-	return nil
-}
-
 func newWallHandler(w http.ResponseWriter, r *http.Request) {
-	name := r.PostFormValue("name")
-	resp := JSONMessage{
-		200, // Start OK
-		"Wall created successfully",
-	}
+	name := r.FormValue("name")
+	name = strings.Replace(name, " ", "_", -1)
 	// If it exists, they can't have it
 	if _, ok := walls["foo"]; ok {
 		// Sorry brah, this wall's taken
-		resp.Status = 406
-		resp.Message = "Someone already owns this wall"
 	} else {
 		err := NewWallBucket(name)
 		if err != nil {
-			resp.Status = 406
-			resp.Message = err.Error()
+			fmt.Println("Error making bucket", err)
+			// Let them know we couldn't persist it
+			http.Redirect(w, r, "/error", 500)
+		} else {
+			// Don't make the wall until we're sure we can persist it
+			walls[name] = Wall{
+				Images: []image.Image{},
+				Name:   name,
+			}
+			fmt.Println("Made new wall", name)
+			http.Redirect(w, r, "/wall/"+name, 301)
 		}
 	}
-	resp.WriteOut(w)
 }
 
 func wallHandler(w http.ResponseWriter, r *http.Request) {

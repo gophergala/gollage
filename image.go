@@ -2,9 +2,12 @@
 package main
 
 import (
+	"errors"
+	"github.com/nfnt/resize"
 	"image"
 	"image/png"
 	"io"
+	"math"
 
 	_ "code.google.com/p/vp8-go/webp"
 	_ "image/jpeg"
@@ -17,4 +20,18 @@ func convertToPNG(w io.Writer, r io.Reader) error {
 		return err
 	}
 	return png.Encode(w, img)
+}
+
+func Resize(totalPix int, pic *image.Image) error {
+	bounds := (*pic).Bounds()
+	// Do actual image manipulations (with ImageMagick?)
+	if bounds.Dx() == 0 || bounds.Dy() == 0 {
+		return errors.New("One or more of your dimensions is zero")
+	}
+	// Ratio
+	ratio := bounds.Dx() / bounds.Dy()
+	width := uint(math.Floor(math.Sqrt(float64(ratio * totalPix))))
+	newPic := resize.Resize(width, 0, *pic, resize.Lanczos3)
+	pic = &newPic
+	return nil
 }

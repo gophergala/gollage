@@ -18,13 +18,13 @@ func init() {
 	if err != nil {
 		fmt.Println("Lol have fun uploading images without an AWS key", err)
 	}
-	accessKey = string(key)
+	accessKey = strings.TrimSpace(string(key))
 
 	key, err = ioutil.ReadFile("secretKey")
 	if err != nil {
 		fmt.Println("Lol have fun uploading images without an AWS key", err)
 	}
-	secretKey = string(key)
+	secretKey = strings.TrimSpace(string(key))
 
 	auth = aws.Auth{
 		AccessKey: accessKey,
