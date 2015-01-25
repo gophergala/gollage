@@ -32,7 +32,7 @@ func init() {
 	}
 }
 
-func AddImageToBucket(wall Wall, wallName string, imageData io.Reader, length int64) error {
+func AddImageToBucket(wall *Wall, wallName string, imageData io.Reader, length int64) error {
 	connection := s3.New(auth, aws.USEast)
 	picBucket := connection.Bucket("gollage/" + wallName + "/rawImages")
 	picBucket.PutBucket(s3.PublicRead)

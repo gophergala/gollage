@@ -68,7 +68,6 @@ function uploadFiles(event) {
     if(typeof data.error === 'undefined')
   {
     // Success so call function to process the form
-    submitForm(event, data);
   }
     else
   {

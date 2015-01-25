@@ -10,7 +10,7 @@ import (
 
 const ImageSize = 90000
 
-var walls map[string]Wall = make(map[string]Wall)
+var walls map[string]*Wall = make(map[string]*Wall)
 
 var templates = template.Must(template.ParseGlob("templates/*.html"))
 
