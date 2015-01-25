@@ -2,14 +2,8 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/gorilla/mux"
-	"image"
-	"image/png"
 	"net/http"
-
-	_ "code.google.com/p/vp8-go/webp"
-	_ "image/jpeg"
 )
 
 // Stole this from https://www.socketloop.com/tutorials/golang-upload-file
@@ -39,31 +33,39 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		resp.Status = 500
-		resp.Message = "Failed to get file from form"
+		resp.Message = "Failed to get file from form: " + err.Error()
 		resp.WriteOut(w)
 		return
 	}
 
-	img, _, err := image.Decode(file)
+	defer file.Close()
+
 	if err != nil {
 		resp.Status = 500
-		resp.Message = "Failed to decode image"
+		resp.Message = "Failed to decode image: " + err.Error()
 		resp.WriteOut(w)
 		return
 	}
-	img, err = Resize(ImageSize, img)
-	if err != nil {
-		resp.Status = 500
-		resp.Message = "Failed to resize image"
-		resp.WriteOut(w)
-		return
-	}
+
+	// Buf will hold the resized raw image data
 	buf := new(bytes.Buffer)
-	png.Encode(buf, img)
-	AddImageToBucket(wall, wallName, header.Filename, buf, r.ContentLength)
+	img, err := Normalize(ImageSize, file, buf)
+	if err != nil {
+		resp.Status = 500
+		resp.Message = "Failed to normalize image: " + err.Error()
+		resp.WriteOut(w)
+		return
+	}
 
-	fmt.Fprintf(w, "File uploaded successfully : ")
-	fmt.Fprintf(w, header.Filename)
+	err = AddImageToBucket(wall, wallName, buf, r.ContentLength)
+	if err != nil {
+		//resp.Status = 500
+		//resp.Message = "Failed to get image onto AWS: " + err.Error()
+		//resp.WriteOut(w)
+		//return
+	}
 
+	wall.AddImage(img)
+	resp.Message = "File uploaded successfully: " + header.Filename
 	resp.WriteOut(w)
 }

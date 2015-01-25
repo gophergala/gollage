@@ -21,99 +21,32 @@ import (
 	"image/png"
 	"io"
 	"math"
+	"mime/multipart"
+
+	_ "code.google.com/p/vp8-go/webp"
+	_ "image/jpeg"
 )
 
-// convertToPNG converts from any recognized format to PNG.
-func ConvertToPNG(w io.Writer, r io.Reader) error {
-	img, _, err := image.Decode(r)
-	if err != nil {
-		return err
-	}
-	return png.Encode(w, img)
-}
+func Normalize(totalPix int, file multipart.File, w io.Writer) (image.Image, error) {
+	img, _, err := image.Decode(file)
 
-func Resize(totalPix int, pic image.Image) (image.Image, error) {
-	bounds := pic.Bounds()
+	if err != nil {
+		return nil, err
+	}
+
+	bounds := img.Bounds()
 	if bounds.Dx() == 0 || bounds.Dy() == 0 {
 		return nil, errors.New("One or more of your dimensions is zero")
 	}
 	// Ratio
 	ratio := bounds.Dx() / bounds.Dy()
 	width := uint(math.Floor(math.Sqrt(float64(ratio * totalPix))))
-	return resize.Resize(width, 0, pic, resize.Lanczos3), nil
-}
+	img = resize.Resize(width, 0, img, resize.Lanczos3)
 
-// Stole this javascript from http://blog.vjeux.com/wp-content/uploads/2012/05/google-layout.html
-// Convert this shit to Go
-/*
-$(function () {
-
-
-func (w *Wall) GetHeight(images, width) {
-  width -= len(images) * 5;
-	height := 0;
-	for i, image := range w.Images {
-    height += image.Pic.Bounds().Dx() / image.Pic.Bounds().Dy()
-  }
-  return width / height;
-}
-
-func (w *Wall) SetHeight(images, height) {
-  w.Heights = append(w.Heights, height)
-		for i, image := range w.Images {
-			height += image.Pic.Bounds().Dx() / image.Pic.Bounds().Dy()
-    $(images[i]).css({
-      width: height * $(images[i]).data('width') / $(images[i]).data('height'),
-      height: height
-    });
-    $(images[i]).attr('src', $(images[i]).attr('src').replace(/w[0-9]+-h[0-9]+/, 'w' + $(images[i]).width() + '-h' + $(images[i]).height()));
+	err = png.Encode(w, img)
+	if err != nil {
+		return nil, err
 	}
+
+	return img, nil
 }
-
-function resize(images, width) {
-  setheight(images, getheight(images, width));
-}
-
-func (w *Wall) Run(maxHeight int) {
-	size := GridWidth - 50
-
-  n = 0;
-
-	queue = []Image
-	copy(queue, w.Images)
-	var slice []Image
-
-	OuterLoop:
-  for len(queue) > 0 {
-		for i := 1; i < len(queue) + 1; i++ {
-			slice := queue[0:i]
-			height := GetHeight(slice, size)
-      if height < maxHeight {
-        SetHeight(slice, height)
-        n++
-				queue = queue[:i]
-				continue OuterLoop
-      }
-    }
-    SetHeight(slice, Min(maxHeight, height))
-    n++
-    break
-  }
-  console.log(n);
-}
-
-func Min(inputs ...int) int {
-	smallest = inputs[0]
-	for _, val := range inputs {
-		if val < smallest {
-			smallest = val
-		}
-	}
-	return smallest
-}
-
-window.addEventListener('resize', function () { run(205); });
-$(function () { run(205); });
-
-});
-*/

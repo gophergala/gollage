@@ -31,15 +31,17 @@ function initWebsockets() {
 var file;
 
 // Add events
-$('input[type=file]').on('change', prepareUpload);
+$(function () {
+  $('input[type=file]').on('change', prepareUpload);
+  $('.image-form').on('submit', uploadFiles);
+});
 
 // Grab the files and set them to our variable
 function prepareUpload(event)
 {
+  // Only get one file
   file = event.target.files[0];
 }
-
-$('.image-form').on('submit', uploadFiles);
 
 // Catch the form submit and upload the files
 function uploadFiles(event) {
@@ -51,7 +53,7 @@ function uploadFiles(event) {
   var url = $(event).attr('action');
   // Create a formdata object and add the files
   var data = new FormData();
-  data.file = file;
+  data.append("file", file);
 
   $.ajax({
     url: url,
@@ -81,46 +83,4 @@ function uploadFiles(event) {
       // STOP LOADING SPINNER
     }
   });
-}
-
-function submitForm(event, data)
-{
-  // Create a jQuery object from the form
-    $form = $(event.target);
-
-    // Serialize the form data
-    var formData = $form.serialize();
-
-    // You should sterilise the file names
-    formData = formData + '&filenames[]=' + data.file;
-
-    $.ajax({
-        url: 'submit.php',
-        type: 'POST',
-        data: formData,
-        cache: false,
-        dataType: 'json',
-        success: function(data, textStatus, jqXHR)
-        {
-            if(typeof data.error === 'undefined')
-            {
-                // Success so call function to process the form
-                console.log('SUCCESS: ' + data.success);
-            }
-            else
-            {
-                // Handle errors here
-                console.log('ERRORS: ' + data.error);
-            }
-        },
-        error: function(jqXHR, textStatus, errorThrown)
-        {
-            // Handle errors here
-            console.log('ERRORS: ' + textStatus);
-        },
-        complete: function()
-        {
-            // STOP LOADING SPINNER
-        }
-    });
 }

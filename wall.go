@@ -9,6 +9,7 @@ import (
 )
 
 const GridWidth = 960
+const GridHeight = 540
 
 type Wall struct {
 	Images  []Image
@@ -18,12 +19,17 @@ type Wall struct {
 }
 
 type Image struct {
-	Pic     image.Image
-	XOffset int
-	YOffset int
+	Pic        image.Image
+	XOffset    int
+	YOffset    int
+	DispWidth  int
+	DispHeight int
 }
 
 func (w *Wall) AddImage(pic image.Image) {
+	w.Images = append(w.Images, Image{pic, 0, 0, 0, 0})
+	w.Run(205)
+	fmt.Printf("%+v\n", w)
 }
 
 func newWallHandler(w http.ResponseWriter, r *http.Request) {
@@ -77,4 +83,64 @@ func wallHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Tried to view non-existent wall")
 		http.Redirect(w, r, "/error", 302)
 	}
+}
+
+// Stole this javascript from http://blog.vjeux.com/wp-content/uploads/2012/05/google-layout.html
+
+func GetHeight(images []Image, width int) int {
+	width -= len(images) * 5
+	height := 0
+	for _, image := range images {
+		height += image.Pic.Bounds().Dx() / image.Pic.Bounds().Dy()
+	}
+	return width / height
+}
+
+func (w *Wall) SetHeight(images []Image, height int) {
+	w.Heights = append(w.Heights, height)
+	for _, image := range images {
+		bounds := image.Pic.Bounds()
+		image.DispWidth = height * bounds.Dx() / bounds.Dy()
+		image.DispHeight = height
+	}
+}
+
+func (w *Wall) Resize(images []Image, width int) {
+	w.SetHeight(images, GetHeight(images, width))
+}
+
+func (w *Wall) Run(maxHeight int) {
+	size := GridWidth - 50
+	n := 0
+
+	images := []Image{}
+	copy(images, w.Images)
+	var slice []Image
+	var height int
+OuterLoop:
+	for len(images) > 0 {
+		for i := 1; i < len(images)+1; i++ {
+			slice = images[0:i]
+			height = GetHeight(slice, size)
+			if height < maxHeight {
+				w.SetHeight(slice, height)
+				n++
+				images = images[:i]
+				continue OuterLoop
+			}
+		}
+		w.SetHeight(slice, Min(maxHeight, height))
+		n++
+		break
+	}
+}
+
+func Min(inputs ...int) int {
+	smallest := inputs[0]
+	for _, num := range inputs {
+		if num < smallest {
+			smallest = num
+		}
+	}
+	return smallest
 }
