@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -10,11 +11,6 @@ import (
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	resp := JSONMessage{
-		200, // Start OK
-		"Image uploaded successfully",
-	}
-
 	wallName := vars["id"]
 	wall, ok := walls[wallName]
 	// You can't add an image to a wall that doesn't exist
@@ -22,28 +18,28 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		// Wall exists
 	} else {
 		// Wall doesn't exist
-		resp.Status = 404
-		resp.Message = "Uh where are you trying to put this?"
-		resp.WriteOut(w)
+		fmt.Println("Uh where are you trying to put this?")
+		// Let them know they dun goofed
+		http.Redirect(w, r, "/error", 302)
 		return
 	}
 
 	// the FormFile function takes in the POST input id file
-	file, header, err := r.FormFile("file")
+	file, _, err := r.FormFile("file")
 
 	if err != nil {
-		resp.Status = 500
-		resp.Message = "Failed to get file from form: " + err.Error()
-		resp.WriteOut(w)
+		fmt.Println("Failed to get file from form: " + err.Error())
+		// Let them know they dun goofed
+		http.Redirect(w, r, "/error", 302)
 		return
 	}
 
 	defer file.Close()
 
 	if err != nil {
-		resp.Status = 500
-		resp.Message = "Failed to decode image: " + err.Error()
-		resp.WriteOut(w)
+		fmt.Println("Failed to decode image: " + err.Error())
+		// Let them know they dun goofed
+		http.Redirect(w, r, "/error", 302)
 		return
 	}
 
@@ -51,21 +47,12 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	buf := new(bytes.Buffer)
 	img, err := Normalize(ImageSize, file, buf)
 	if err != nil {
-		resp.Status = 500
-		resp.Message = "Failed to normalize image: " + err.Error()
-		resp.WriteOut(w)
+		fmt.Println("Failed to normalize image: " + err.Error())
+		// Let them know they dun goofed
+		http.Redirect(w, r, "/error", 302)
 		return
 	}
 
-	err = AddImageToBucket(wall, wallName, buf, r.ContentLength)
-	if err != nil {
-		//resp.Status = 500
-		//resp.Message = "Failed to get image onto AWS: " + err.Error()
-		//resp.WriteOut(w)
-		//return
-	}
-
 	wall.AddImage(img)
-	resp.Message = "File uploaded successfully: " + header.Filename
-	resp.WriteOut(w)
+	http.Redirect(w, r, "/wall/"+wallName, 302)
 }

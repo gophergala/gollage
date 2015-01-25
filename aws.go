@@ -1,12 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/s3"
-	"strconv"
 	"strings"
 )
 
@@ -32,16 +31,15 @@ func init() {
 	}
 }
 
-func AddImageToBucket(wall *Wall, wallName string, imageData io.Reader, length int64) error {
+func AddWallImage(wallName string, buf *bytes.Buffer) error {
 	connection := s3.New(auth, aws.USEast)
-	picBucket := connection.Bucket("gollage/" + wallName + "/rawImages")
-	picBucket.PutBucket(s3.PublicRead)
-	name := strconv.Itoa(len(wall.Images)) + ".png"
-	return picBucket.PutReader(name, imageData, length, "image/png", s3.PublicRead)
+	picBucket := connection.Bucket("gollage/" + wallName + "")
+	return picBucket.PutReader("full.png", buf, int64(buf.Len()), "image/png", s3.PublicRead)
 }
 
 func NewWallBucket(name string) error {
-	connection := s3.New(auth, aws.USEast)
-	picBucket := connection.Bucket("gollage/" + name)
-	return picBucket.PutBucket(s3.PublicRead)
+	//connection := s3.New(auth, aws.USEast)
+	//picBucket := connection.Bucket("gollage/" + name)
+	//return picBucket.PutBucket(s3.PublicRead)
+	return nil
 }

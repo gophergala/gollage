@@ -19,7 +19,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", serveHome)
-	r.HandleFunc("/ws", serveWs)
+	r.HandleFunc("/ws/{id}", serveWs)
 	r.HandleFunc("/error", serveError)
 
 	// Brace yourself, some RESTful AF actions in here

@@ -6,7 +6,31 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Gollage</title>
+    <script>
+      // Websocket object
+      var conn;
 
+      function initWebsockets() {
+        // Establish a WebSocket connection
+        if (window["WebSocket"]) {
+            conn = new WebSocket("ws://" + host + "/ws/{{.Wall.Name}}");
+            conn.onerror = function(evt) {
+              console.log(evt);
+            }
+            conn.onclose = function(evt) {
+              console.log(evt);
+            }
+            conn.onmessage = function(evt) { // Message received. evt.data is something
+              // Parse the JSON out of the data
+              var data = JSON.parse(evt.data);
+            }
+        } else {
+            // Your browser does not support WebSockets
+        }
+      }
+    </script>
+
+    <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
 

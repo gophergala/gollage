@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/nfnt/resize"
@@ -8,7 +9,6 @@ import (
 	"image/draw"
 	"image/png"
 	"net/http"
-	"os"
 	"strings"
 
 	_ "code.google.com/p/vp8-go/webp"
@@ -17,6 +17,8 @@ import (
 
 const GridWidth = 960
 const GridHeight = 540
+const HorizontalMargin = 5
+const VerticalMargin = 5
 
 type Wall struct {
 	Images  []*Image
@@ -42,7 +44,7 @@ func (w *Wall) AddImage(pic image.Image) {
 
 func newWallHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
-	name = strings.Replace(name, " ", "_", -1)
+	name = strings.Replace(name, " ", "", -1)
 
 	if len(name) == 0 {
 		fmt.Println("No name entered")
@@ -51,9 +53,12 @@ func newWallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// If it exists, they can't have it
-	if _, ok := walls["foo"]; ok {
+	if _, ok := walls[name]; ok {
 		// Sorry brah, this wall's taken
+		http.Redirect(w, r, "/error", 302)
+		return
 	} else {
+		//
 		err := NewWallBucket(name)
 		if err != nil {
 			fmt.Println("Error making bucket", err)
@@ -61,7 +66,7 @@ func newWallHandler(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/error", 302)
 			return
 		} else {
-			// Don't make the wall until we're sure we can persist it
+			//Don't make the wall until we're sure we can persist it
 			walls[name] = &Wall{
 				Images: []*Image{},
 				Name:   name,
@@ -78,9 +83,15 @@ func wallHandler(w http.ResponseWriter, r *http.Request) {
 	wall, ok := walls[vars["id"]]
 	if ok {
 		data := struct {
-			Wall Wall
+			Wall   Wall
+			Width  int
+			Height int
+			Host   string
 		}{
 			*wall,
+			GridWidth,
+			GridHeight,
+			r.Host,
 		}
 		err := templates.ExecuteTemplate(w, "wall.html", data)
 		if err != nil {
@@ -95,9 +106,10 @@ func wallHandler(w http.ResponseWriter, r *http.Request) {
 // Stole this javascript from http://blog.vjeux.com/wp-content/uploads/2012/05/google-layout.html
 
 func GetHeight(images []*Image, width int) int {
+	width -= len(images) * HorizontalMargin
 	height := 0
-	for _, image := range images {
-		height += image.Pic.Bounds().Dx() / image.Pic.Bounds().Dy()
+	for _, img := range images {
+		height += img.Pic.Bounds().Dx() / img.Pic.Bounds().Dy()
 	}
 	return width / height
 }
@@ -113,7 +125,7 @@ func (w *Wall) CalcYOffset(rowNum int) int {
 }
 
 func (w *Wall) SetRow(images []*Image, height, rowNum int) {
-	w.Heights = append(w.Heights, height)
+	w.Heights = append(w.Heights, height+VerticalMargin)
 	xOffset, yOffset := 0, w.CalcYOffset(rowNum)
 	for _, image := range images {
 		bounds := image.Pic.Bounds()
@@ -123,7 +135,7 @@ func (w *Wall) SetRow(images []*Image, height, rowNum int) {
 		image.XOffset = xOffset
 		image.YOffset = yOffset
 
-		xOffset += image.DispWidth
+		xOffset += image.DispWidth + HorizontalMargin
 	}
 }
 
@@ -131,8 +143,7 @@ func (w *Wall) Run(maxHeight int) {
 	var slice []*Image
 	var height int
 	n := 0
-	images := make([]*Image, len(w.Images))
-	copy(images, w.Images)
+	images := w.Images
 OuterLoop:
 	for len(images) > 0 {
 		for i := 1; i < len(images)+1; i++ {
@@ -145,7 +156,7 @@ OuterLoop:
 				continue OuterLoop
 			}
 		}
-		w.SetRow(slice, Min(maxHeight, height), n)
+		w.SetRow(images, Min(maxHeight, height), n)
 		break
 	}
 }
@@ -164,17 +175,29 @@ func (w *Wall) DrawWall() {
 
 	b := image.Rect(0, 0, GridWidth, GridHeight)
 	m := image.NewRGBA(b)
-	fmt.Println()
-	fmt.Println()
-	fmt.Println()
-	fmt.Println()
-	for _, img := range w.Images {
-		loc := image.Rect(img.XOffset, img.YOffset, img.XOffset+img.DispWidth, img.YOffset+img.DispHeight)
-		sized := resize.Resize(uint(img.DispWidth), uint(img.DispHeight), img.Pic, resize.Lanczos3)
-		draw.Draw(m, loc, sized, image.ZP, draw.Src)
+	var original = make(chan Image, 100)
+	var resized = make(chan Image, 100)
+
+	// We make worker threads for resizing images whenever we draw a new wall
+	for i := 0; i < 5; i++ {
+		go ResizeWorker(original, resized)
 	}
-	out, _ := os.Create("../img.png")
-	png.Encode(out, m)
+
+	for _, img := range w.Images {
+		original <- *img
+	}
+	close(original)
+
+	for _, _ = range w.Images {
+		img := <-resized
+		loc := image.Rect(img.XOffset, img.YOffset, img.XOffset+img.DispWidth, img.YOffset+img.DispHeight)
+		draw.Draw(m, loc, img.Pic, image.ZP, draw.Src)
+	}
+
+	out := new(bytes.Buffer)
+	encoder := png.Encoder{png.BestCompression}
+	encoder.Encode(out, m)
+	AddWallImage(w.Name, out)
 }
 
 func (w *Wall) ClearPositioning() {
@@ -184,5 +207,18 @@ func (w *Wall) ClearPositioning() {
 		img.YOffset = 0
 		img.DispWidth = 0
 		img.DispHeight = 0
+	}
+}
+
+func ResizeWorker(originals <-chan Image, resized chan<- Image) {
+	for img := range originals {
+		newImage := Image{
+			XOffset:    img.XOffset,
+			YOffset:    img.YOffset,
+			DispWidth:  img.DispWidth,
+			DispHeight: img.DispHeight,
+		}
+		newImage.Pic = resize.Resize(uint(img.DispWidth), uint(img.DispHeight), img.Pic, resize.NearestNeighbor)
+		resized <- newImage
 	}
 }
