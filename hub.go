@@ -4,46 +4,59 @@
 
 package main
 
+type SocketData struct {
+	Message []byte
+	Channel string
+}
+
+type RegisterConn struct {
+	Conn    *connection
+	Channel string
+}
+
 // hub maintains the set of active connections and broadcasts messages to the
 // connections.
 type hub struct {
-	// Registered connections.
-	connections map[*connection]bool
+	// Registered connections, organized by channel
+	connections map[string]map[*connection]bool
 
 	// Inbound messages from the connections.
-	broadcast chan []byte
+	broadcast chan SocketData
 
 	// Register requests from the connections.
-	register chan *connection
+	register chan RegisterConn
 
 	// Unregister requests from connections.
-	unregister chan *connection
+	unregister chan RegisterConn
 }
 
 var h = hub{
-	broadcast:   make(chan []byte),
-	register:    make(chan *connection),
-	unregister:  make(chan *connection),
-	connections: make(map[*connection]bool),
+	broadcast:   make(chan SocketData),
+	register:    make(chan RegisterConn),
+	unregister:  make(chan RegisterConn),
+	connections: make(map[string]map[*connection]bool),
 }
 
 func (h *hub) run() {
 	for {
 		select {
 		case c := <-h.register:
-			h.connections[c] = true
+			if _, ok := h.connections[c.Channel]; !ok {
+				h.connections[c.Channel] = make(map[*connection]bool)
+			}
+			h.connections[c.Channel][c.Conn] = true
 		case c := <-h.unregister:
-			if _, ok := h.connections[c]; ok {
-				delete(h.connections, c)
-				close(c.send)
+			if _, ok := h.connections[c.Channel][c.Conn]; ok {
+				delete(h.connections[c.Channel], c.Conn)
+				close(c.Conn.send)
 			}
 		case m := <-h.broadcast:
-			for c := range h.connections {
+			for c := range h.connections[m.Channel] {
 				select {
-				case c.send <- m:
+				case c.send <- m.Message:
 				default:
 					close(c.send)
-					delete(h.connections, c)
+					delete(h.connections[m.Channel], c)
 				}
 			}
 		}

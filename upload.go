@@ -45,7 +45,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Buf will hold the resized raw image data
 	buf := new(bytes.Buffer)
-	img, err := Normalize(ImageSize, file, buf)
+	pic, err := Normalize(ImageSize, file, buf)
 	if err != nil {
 		fmt.Println("Failed to normalize image: " + err.Error())
 		// Let them know they dun goofed
@@ -53,6 +53,10 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	img := &Image{
+		Pic: pic,
+		Url: r.PostFormValue("url"),
+	}
 	wall.AddImage(img)
 	http.Redirect(w, r, "/wall/"+wallName, 302)
 }

@@ -2,12 +2,14 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/nfnt/resize"
 	"image"
 	"image/draw"
 	"image/png"
+	"math/rand"
 	"net/http"
 	"strings"
 
@@ -29,17 +31,26 @@ type Wall struct {
 
 type Image struct {
 	Pic        image.Image
+	Url        string
 	XOffset    int
 	YOffset    int
 	DispWidth  int
 	DispHeight int
 }
 
-func (w *Wall) AddImage(pic image.Image) {
+type Metadata struct {
+	Url        string
+	XOffset    int
+	YOffset    int
+	DispWidth  int
+	DispHeight int
+}
+
+func (w *Wall) AddImage(img *Image) {
 	w.ClearPositioning()
-	w.Images = append(w.Images, &Image{Pic: pic})
-	w.Run(205)
-	w.DrawWall()
+	w.Images = append(w.Images, img)
+	w.Run(100)
+	go w.DrawWall()
 }
 
 func newWallHandler(w http.ResponseWriter, r *http.Request) {
@@ -83,12 +94,14 @@ func wallHandler(w http.ResponseWriter, r *http.Request) {
 	wall, ok := walls[vars["id"]]
 	if ok {
 		data := struct {
-			Wall   Wall
-			Width  int
-			Height int
-			Host   string
+			Wall    Wall
+			Channel string
+			Width   int
+			Height  int
+			Host    string
 		}{
 			*wall,
+			wall.Name,
 			GridWidth,
 			GridHeight,
 			r.Host,
@@ -197,7 +210,15 @@ func (w *Wall) DrawWall() {
 	out := new(bytes.Buffer)
 	encoder := png.Encoder{png.BestCompression}
 	encoder.Encode(out, m)
-	AddWallImage(w.Name, out)
+
+	// Out the full sized one
+	AddWallImage(w.Name, "full", out)
+
+	// Downsize it, out the thumbnail
+	thumb := resize.Resize(GridWidth/4, 0, m, resize.NearestNeighbor)
+	out = new(bytes.Buffer)
+	encoder.Encode(out, thumb)
+	AddWallImage(w.Name, "thumb", out)
 }
 
 func (w *Wall) ClearPositioning() {
@@ -221,4 +242,39 @@ func ResizeWorker(originals <-chan Image, resized chan<- Image) {
 		newImage.Pic = resize.Resize(uint(img.DispWidth), uint(img.DispHeight), img.Pic, resize.NearestNeighbor)
 		resized <- newImage
 	}
+}
+
+func (w *Wall) ImageLocJSON() string {
+	data := make([]Metadata, len(w.Images))
+	for i, img := range w.Images {
+		data[i].Url = img.Url
+		data[i].XOffset = img.XOffset
+		data[i].YOffset = img.YOffset
+		data[i].DispWidth = img.DispWidth
+		data[i].DispHeight = img.DispHeight
+	}
+	// Should probably check that error, or nah, it is a hackathon
+	js, _ := json.Marshal(data)
+	return string(js)
+}
+
+func RandomWalls(num int) []*Wall {
+	retWalls := make([]*Wall, num)
+	for i := 0; i < num; i++ {
+		retWalls[i] = RandomWall()
+	}
+	return retWalls
+}
+
+func RandomWall() *Wall {
+	// produce a pseudo-random number between 0 and len(a)-1
+	i := int(float32(len(walls)) * rand.Float32())
+	for _, v := range walls {
+		if i == 0 {
+			return v
+		} else {
+			i--
+		}
+	}
+	return nil
 }

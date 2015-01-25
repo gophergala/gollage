@@ -15,6 +15,8 @@ var walls map[string]*Wall = make(map[string]*Wall)
 var templates = template.Must(template.ParseGlob("templates/*.html"))
 
 func main() {
+	// Start with a blank wall
+	walls["Default"] = &Wall{Name: "Default"}
 	go h.run()
 
 	r := mux.NewRouter()

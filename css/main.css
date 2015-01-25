@@ -1,7 +1,12 @@
+.main-wall {
+  background-color: #2C3E50;
+}
+
 .btn-file {
     position: relative;
     overflow: hidden;
 }
+
 .btn-file input[type=file] {
     position: absolute;
     top: 0;
@@ -22,10 +27,16 @@
   margin-bottom: 20px;
   text-align: center;
 }
-.marketing h2 {
+
+.random-walls h2 {
   font-weight: normal;
 }
-.marketing > div p {
+
+.random-walls > div p {
   margin-right: 10px;
   margin-left: 10px;
+}
+
+.image-form {
+  margin-top: 10px;
 }

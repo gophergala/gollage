@@ -5,6 +5,7 @@
 package main
 
 import (
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
@@ -43,9 +44,9 @@ type connection struct {
 }
 
 // readPump pumps messages from the websocket connection to the hub.
-func (c *connection) readPump() {
+func (c *connection) readPump(channel string) {
 	defer func() {
-		h.unregister <- c
+		h.unregister <- RegisterConn{Conn: c, Channel: channel}
 		c.ws.Close()
 	}()
 	c.ws.SetReadLimit(maxMessageSize)
@@ -56,7 +57,7 @@ func (c *connection) readPump() {
 		if err != nil {
 			break
 		}
-		h.broadcast <- message
+		h.broadcast <- SocketData{Message: message, Channel: channel}
 	}
 }
 
@@ -67,7 +68,7 @@ func (c *connection) write(mt int, payload []byte) error {
 }
 
 // writePump pumps messages from the hub to the websocket connection.
-func (c *connection) writePump() {
+func (c *connection) writePump(channel string) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -93,6 +94,7 @@ func (c *connection) writePump() {
 
 // serverWs handles websocket requests from the peer.
 func serveWs(w http.ResponseWriter, r *http.Request) {
+	channel := mux.Vars(r)["id"]
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
 		return
@@ -103,7 +105,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c := &connection{send: make(chan []byte, 256), ws: ws}
-	h.register <- c
-	go c.writePump()
-	c.readPump()
+	h.register <- RegisterConn{Conn: c, Channel: channel}
+	go c.writePump(channel)
+	c.readPump(channel)
 }

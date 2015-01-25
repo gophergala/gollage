@@ -1,4 +1,4 @@
-{{template "head"}}
+{{template "head" .}}
 <div class="jumbotron">
   <div class="container">
     <h1>Welcome to Gollage <small><small>and a very generic Bootstrap template</small></small></h1>
@@ -28,21 +28,13 @@
     </div>
   </div>
   <div class="row random-walls">
+    {{range $index, $wall := .RandomWalls }}
     <div class="col-lg-4">
-      <img class="img-circle" src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="Generic placeholder image" style="width: 140px; height: 140px;">
-      <h2>Heading</h2>
-      <p><a class="btn btn-default" href="#" role="button">View Wall »</a></p>
+      <img class="img-circle mini-wall" src="https://s3.amazonaws.com/gollage/{{$wall.Name}}/thumb.png" alt="Generic placeholder image" style="width: 140px; height: 140px;">
+      <h2>{{$wall.Name}}</h2>
+      <p><a class="btn btn-default" href="/wall/{{$wall.Name}}" role="button">View {{$wall.Name}}</a></p>
     </div><!-- /.col-lg-4 -->
-    <div class="col-lg-4">
-      <img class="img-circle" src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="Generic placeholder image" style="width: 140px; height: 140px;">
-      <h2>Heading</h2>
-      <p><a class="btn btn-default" href="#" role="button">View Wall »</a></p>
-    </div><!-- /.col-lg-4 -->
-    <div class="col-lg-4">
-      <img class="img-circle" src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="Generic placeholder image" style="width: 140px; height: 140px;">
-      <h2>Heading</h2>
-      <p><a class="btn btn-default" href="#" role="button">View Wall »</a></p>
-    </div><!-- /.col-lg-4 -->
+    {{end}}
   </div>
 </div>
-{{template "tail"}}
+{{template "tail" .}}

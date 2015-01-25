@@ -31,10 +31,10 @@ func init() {
 	}
 }
 
-func AddWallImage(wallName string, buf *bytes.Buffer) error {
+func AddWallImage(wallName, fileName string, buf *bytes.Buffer) error {
 	connection := s3.New(auth, aws.USEast)
 	picBucket := connection.Bucket("gollage/" + wallName + "")
-	return picBucket.PutReader("full.png", buf, int64(buf.Len()), "image/png", s3.PublicRead)
+	return picBucket.PutReader(fileName+".png", buf, int64(buf.Len()), "image/png", s3.PublicRead)
 }
 
 func NewWallBucket(name string) error {
