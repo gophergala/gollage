@@ -21,13 +21,12 @@ import (
 	"image/png"
 	"io"
 	"math"
-	"mime/multipart"
 
 	_ "code.google.com/p/vp8-go/webp"
 	_ "image/jpeg"
 )
 
-func Normalize(totalPix int, file multipart.File, w io.Writer) (image.Image, error) {
+func Normalize(totalPix int, file io.Reader, w io.Writer) (image.Image, error) {
 	img, _, err := image.Decode(file)
 
 	if err != nil {

@@ -19,6 +19,9 @@ import (
 
 const GridWidth = 960
 const GridHeight = 540
+
+// Make this computed
+const RowMaxHeight = 100
 const HorizontalMargin = 5
 const VerticalMargin = 5
 
@@ -47,10 +50,7 @@ type Metadata struct {
 }
 
 func (w *Wall) AddImage(img *Image) {
-	w.ClearPositioning()
 	w.Images = append(w.Images, img)
-	w.Run(100)
-	go w.DrawWall()
 }
 
 func newWallHandler(w http.ResponseWriter, r *http.Request) {
@@ -94,17 +94,19 @@ func wallHandler(w http.ResponseWriter, r *http.Request) {
 	wall, ok := walls[vars["id"]]
 	if ok {
 		data := struct {
-			Wall    Wall
-			Channel string
-			Width   int
-			Height  int
-			Host    string
+			Wall     Wall
+			Channel  string
+			Width    int
+			Height   int
+			Host     string
+			LinkJSON string
 		}{
 			*wall,
 			wall.Name,
 			GridWidth,
 			GridHeight,
 			r.Host,
+			wall.ImageLocJSON(),
 		}
 		err := templates.ExecuteTemplate(w, "wall.html", data)
 		if err != nil {
@@ -152,7 +154,8 @@ func (w *Wall) SetRow(images []*Image, height, rowNum int) {
 	}
 }
 
-func (w *Wall) Run(maxHeight int) {
+func (w *Wall) Run() {
+	maxHeight := RowMaxHeight
 	var slice []*Image
 	var height int
 	n := 0

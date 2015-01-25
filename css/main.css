@@ -40,3 +40,15 @@
 .image-form {
   margin-top: 10px;
 }
+
+.wall-holder {
+  position: relative;
+  display: inline-block;
+  width: 960px;
+}
+
+.click-box {
+  display: block;
+  position: absolute;
+  cursor: pointer;
+}
