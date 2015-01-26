@@ -5,8 +5,8 @@ have a system where people could create "walls" and put images and links on
 them, where each wall has a theme. Gollage accomplishes this to some degree.
 
 ## To Use
-1. Make a wall on [Gollage](www.gollage.io)
-2. Give out the link to your wall to people. It'll be www.gollage.io/wall/YourWallName
+1. Make a wall on [Gollage](http://www.gollage.io)
+2. Give out the link to your wall to people. It'll be [www.gollage.io/wall/YourWallName](www.gollage.io/wall/Default)
 3. Upload images and set links on them. You can upload multiple files at once.
 4. Refresh the page (I background the dynamic image generation/resizing process)
 5. Enjoy your Gollage!
