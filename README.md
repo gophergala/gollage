@@ -1,5 +1,45 @@
 # gollage
 
+I've never used Pinterest, but I think this might be similar. The idea was to
+have a system where people could create "walls" and put images and links on
+them, where each wall has a theme. Gollage accomplishes this to some degree.
+
+## To Use
+1. Make a wall on [Gollage](www.gollage.io)
+2. Give out the link to your wall to people. It'll be www.gollage.io/wall/YourWallName
+3. Upload images and set links on them. You can upload multiple files at once.
+4. Refresh the page (I background the dynamic image generation/resizing process)
+5. Enjoy your Gollage!
+
+## What Works
+* Wall Making
+* Linked Images
+* Thumbnails
+* Dynamic Image Tiling
+* Multiple Image Upload
+
+## What Doesn't Work
+* Some issues with the tiling algorithm
+* WebSockets are implemented, but don't let you know when the wall you're looking at is updated
+* It isn't as pretty as I'd like
+* Tiling algorithm doesn't scale nicely yet
+
+## Taking advantage of Go
+Go is used for pretty much everything, with only a few lines of Javascript
+used. I use Go for:
+
+* Dynamic image composition
+* Image Resizing
+* HTTP serving/AWS interaction
+* Templating pages
+
+I use Goroutines to make worker threads for processing image composition. All
+image manipulation happens in Go, no external tools (like ImageMagick) are
+used. Standard packages and Gorilla packages are used extensively.
+
+# Stream of Consciousness Updates
+These are the things I was writing as I worked on this at various points throughout this weekend.
+
 I don't really know what this is yet, I'm going to start with a web server and
 some WebSockets and the basis of an idea. Then I'm going to get some scorpion
 bowls, and hope the Ballmer Peak does the rest.
