@@ -23,6 +23,7 @@ them, where each wall has a theme. Gollage accomplishes this to some degree.
 * WebSockets are implemented, but don't let you know when the wall you're looking at is updated
 * It isn't as pretty as I'd like
 * Tiling algorithm doesn't scale nicely yet
+* Originally I wanted to be able to zoom in on huge collages, but you can't currently do that
 
 ## Taking advantage of Go
 Go is used for pretty much everything, with only a few lines of Javascript
